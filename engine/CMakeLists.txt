@@ -18,3 +18,14 @@ target_compile_options(nexus-engine PRIVATE
 
 # Include directories
 target_include_directories(nexus-engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Tests
+if(PROJECT_NAME STREQUAL "nexus-engine")
+    file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
+    add_executable(nexus-engine-tests ${TEST_SOURCES})
+
+    target_link_libraries(nexus-engine-tests PRIVATE nexus-engine)
+    target_include_directories(nexus-engine-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    add_test(NAME nexus-engine-tests COMMAND nexus-engine-tests)
+endif()
