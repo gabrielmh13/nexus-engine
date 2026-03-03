@@ -7,7 +7,7 @@ namespace NexusEngine::ECS {
     class IComponentPool {
     public:
         virtual ~IComponentPool() = default;
-        virtual void RemoveComponent(uint32_t entityId) = 0;
+        virtual void Remove(uint32_t entityId) = 0;
     };
 
     template<typename T>
@@ -28,7 +28,7 @@ namespace NexusEngine::ECS {
             return it != data.end() ? &it->second : nullptr;
         }
 
-        void RemoveComponent(uint32_t entityId) override {
+        void Remove(uint32_t entityId) override {
             data.erase(entityId);
         }
     private:

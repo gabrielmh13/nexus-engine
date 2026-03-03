@@ -3,6 +3,10 @@
 #include <cassert>
 #include <print>
 
+struct Position {
+    int x, y, z;
+};
+
 void TestCreateEntity(){
     NexusEngine::ECS::Registry registry;
     auto entity = registry.CreateEntity();
@@ -28,10 +32,29 @@ void TestEntityIdReuse(){
     std::print("[OK] EntityIdReuse\n");
 }
 
+void TestAddComponent(){
+    NexusEngine::ECS::Registry registry;
+    auto entity = registry.CreateEntity();
+    registry.AddComponent<Position>(entity, {0, 0, 0});
+    assert(registry.HasComponent<Position>(entity));
+    std::print("[OK] AddComponent\n");
+}
+
+void TestRemoveComponent(){
+    NexusEngine::ECS::Registry registry;
+    auto entity = registry.CreateEntity();
+    registry.AddComponent<Position>(entity, {0, 0, 0});
+    registry.RemoveComponent<Position>(entity);
+    assert(!registry.HasComponent<Position>(entity));
+    std::print("[OK] RemoveComponent\n");
+}
+
 int main() {
     TestCreateEntity();
     TestDestroyEntity();
     TestEntityIdReuse();
+    TestAddComponent();
+    TestRemoveComponent();
     return 0;
 }
 

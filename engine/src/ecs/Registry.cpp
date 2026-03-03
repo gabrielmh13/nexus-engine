@@ -20,6 +20,10 @@ namespace NexusEngine::ECS {
         if(!IsEntityValid(entity))
             return;
 
+        for(auto& [type, pool] : m_Pools){
+            pool->Remove(entity.m_Id);
+        }
+
         m_Generations[entity.m_Id] += 1;
         m_FreeList.push_back(entity.m_Id);
     }
