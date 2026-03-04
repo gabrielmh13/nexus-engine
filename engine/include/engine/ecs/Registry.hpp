@@ -52,7 +52,7 @@ namespace NexusEngine::ECS {
 
         template<typename T>
         ComponentPool<T>& GetPool(){  
-            auto [it, _] = m_Pools.try_emplace(std::type_index(typeid(T)), std::make_unique<ComponentPool<T>>());
+            auto [it, _] = m_Pools.try_emplace(std::type_index(typeid(T)), std::make_unique<ComponentPool<T>>(1024));
             return *static_cast<ComponentPool<T>*>(it->second.get());
         }
     };
