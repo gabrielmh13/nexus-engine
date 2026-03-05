@@ -4,7 +4,7 @@
 #include <print>
 
 struct Position {
-    int x, y, z;
+    float x, y, z;
 };
 
 void TestCreateEntity(){

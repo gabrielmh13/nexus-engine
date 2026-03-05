@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
+#include <algorithm>
 
 namespace NexusEngine::ECS {
     class IComponentPool {
@@ -14,76 +16,97 @@ namespace NexusEngine::ECS {
     class ComponentPool : public IComponentPool {
     public:
         static constexpr int32_t INVALID_INDEX = -1;
+        static constexpr size_t CHUNK_SIZE = 64;
 
         ComponentPool(size_t size){
-            sparse.resize(size, INVALID_INDEX);
             entities.reserve(size);
             denseComponents.reserve(size);
         }
 
         T& Add(uint32_t entityId){
-            EnsureCapacity(entityId);
-
-            if(sparse[entityId] != INVALID_INDEX){
-                denseComponents[sparse[entityId]] = T{};
-                return denseComponents[sparse[entityId]];
+            if(GetSparseValue(entityId) != INVALID_INDEX){
+                denseComponents[GetSparseValue(entityId)] = T{};
+                return denseComponents[GetSparseValue(entityId)];
             }
 
             uint32_t index = denseComponents.size();
             denseComponents.emplace_back(T{});
             entities.push_back(entityId);
-            sparse[entityId] = index;
+            SetSparseValue(entityId, index);
             return denseComponents[index];
         }
 
         T& Add(uint32_t entityId, T component){
-            EnsureCapacity(entityId);
-
-            if(sparse[entityId] != INVALID_INDEX){
-                denseComponents[sparse[entityId]] = std::move(component);
-                return denseComponents[sparse[entityId]];
+            if(GetSparseValue(entityId) != INVALID_INDEX){
+                denseComponents[GetSparseValue(entityId)] = std::move(component);
+                return denseComponents[GetSparseValue(entityId)];
             }
 
            uint32_t index = denseComponents.size();
            denseComponents.emplace_back(std::move(component));
            entities.push_back(entityId);
-           sparse[entityId] = index;
+           SetSparseValue(entityId, index);
            return denseComponents[index];
         }
 
         T* Get(uint32_t entityId){
-            if(entityId >= sparse.size() || sparse[entityId] == INVALID_INDEX)
+            if(GetSparseValue(entityId) == INVALID_INDEX)
                 return nullptr;
 
-            return &denseComponents[sparse[entityId]];
+            return &denseComponents[GetSparseValue(entityId)];
         }
 
         void Remove(uint32_t entityId) override {
-            if(entityId >= sparse.size() || sparse[entityId] == INVALID_INDEX)
+            if(GetSparseValue(entityId) == INVALID_INDEX)
                 return;
 
-            uint32_t index = sparse[entityId];
+            uint32_t index = GetSparseValue(entityId);
             uint32_t lastIndex = denseComponents.size() - 1;
 
             if(index != lastIndex){
                 denseComponents[index] = std::move(denseComponents[lastIndex]);
                 entities[index] = entities[lastIndex];
-                sparse[entities[index]] = index;
+                SetSparseValue(entities[index], index);
             }
 
             denseComponents.pop_back();
             entities.pop_back();
-            sparse[entityId] = INVALID_INDEX;
+            SetSparseValue(entityId, INVALID_INDEX);
         }
     private:
-        std::vector<int32_t> sparse;
         std::vector<T> denseComponents;
         std::vector<uint32_t> entities;
 
+        std::vector<std::unique_ptr<int32_t[]>> chunks;
+
         void EnsureCapacity(uint32_t entityId){
-            if(entityId >= sparse.size()){
-                sparse.resize(entityId + 1, INVALID_INDEX);
+            size_t chunkIndex = entityId / CHUNK_SIZE;
+
+            if(chunkIndex >= chunks.size())
+                chunks.resize(chunkIndex + 1);
+
+            if(chunks[chunkIndex] == nullptr){
+                chunks[chunkIndex] = std::make_unique<int32_t[]>(CHUNK_SIZE);
+                std::fill(chunks[chunkIndex].get(), chunks[chunkIndex].get() + CHUNK_SIZE, INVALID_INDEX);
             }
+        }
+
+        int32_t GetSparseValue(uint32_t entityId) const noexcept {
+            size_t chunkIndex = entityId / CHUNK_SIZE;
+            size_t localIndex = entityId % CHUNK_SIZE;
+
+            if(chunkIndex >= chunks.size() || chunks[chunkIndex] == nullptr)
+                return INVALID_INDEX;
+
+            return chunks[chunkIndex][localIndex];
+        }
+
+        void SetSparseValue(uint32_t entityId, int32_t value){
+            EnsureCapacity(entityId);
+
+            size_t chunkIndex = entityId / CHUNK_SIZE;
+            size_t localIndex = entityId % CHUNK_SIZE;
+            chunks[chunkIndex][localIndex] = value;
         }
     };
 }

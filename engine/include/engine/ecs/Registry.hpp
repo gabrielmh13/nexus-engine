@@ -12,6 +12,8 @@
 namespace NexusEngine::ECS {
     class Registry {
     public:
+        static constexpr size_t DEFAULT_POOL_SIZE = 4096;
+
         Entity CreateEntity();
         void DestroyEntity(Entity entity);
         bool IsEntityValid(Entity entity) const;
@@ -44,6 +46,12 @@ namespace NexusEngine::ECS {
             auto& pool = GetPool<T>();
             return pool.Get(entity.m_Id) != nullptr;
         }
+
+        template<typename T>
+        void RegisterComponent(size_t size = DEFAULT_POOL_SIZE){
+            m_Pools.try_emplace(std::type_index(typeid(T)), std::make_unique<ComponentPool<T>>(size));
+        }
+
     private:
         std::vector<uint32_t> m_Generations;
         std::vector<uint32_t> m_FreeList;
@@ -52,7 +60,7 @@ namespace NexusEngine::ECS {
 
         template<typename T>
         ComponentPool<T>& GetPool(){  
-            auto [it, _] = m_Pools.try_emplace(std::type_index(typeid(T)), std::make_unique<ComponentPool<T>>(1024));
+            auto [it, _] = m_Pools.try_emplace(std::type_index(typeid(T)), std::make_unique<ComponentPool<T>>(DEFAULT_POOL_SIZE));
             return *static_cast<ComponentPool<T>*>(it->second.get());
         }
     };
