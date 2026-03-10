@@ -2,6 +2,7 @@
 
 #include "engine/ecs/Entity.hpp"
 #include "engine/ecs/ComponentPool.hpp"
+#include "engine/ecs/View.hpp"
 
 #include <cassert>
 #include <vector>
@@ -50,6 +51,11 @@ namespace NexusEngine::ECS {
         template<typename T>
         void RegisterComponent(size_t size = DEFAULT_POOL_SIZE){
             m_Pools.try_emplace(std::type_index(typeid(T)), std::make_unique<ComponentPool<T>>(size));
+        }
+
+        template<typename... Components>
+        auto View(){
+            return NexusEngine::ECS::View<Components...>(*this, GetPool<Components>()...);
         }
 
     private:
