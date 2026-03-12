@@ -55,7 +55,7 @@ namespace NexusEngine::ECS {
 
         template<typename... Components>
         auto View(){
-            return NexusEngine::ECS::View<Components...>(*this, GetPool<Components>()...);
+            return NexusEngine::ECS::View<Components...>(GetPool<Components>()...);
         }
 
     private:

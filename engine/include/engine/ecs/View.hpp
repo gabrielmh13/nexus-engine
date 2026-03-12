@@ -8,23 +8,21 @@
 
 namespace NexusEngine::ECS {
 
-    class Registry;
-
     template<typename... Components>
     class View {
     public:
-        View(Registry& registry, ComponentPool<Components>&... pools)
-            : m_Registry(registry), m_Pools(pools...) 
+        View(ComponentPool<Components>&... pools)
+            : m_Pools(pools...) 
         {
         }
 
         template<typename Func>
         void Each(Func&& func){
             std::size_t pivot = FindSmallestPoolIndex();
+            Dispatch(std::forward<Func>(func), pivot, std::index_sequence_for<Components...>{});
         }
 
     private:
-        Registry& m_Registry;
         std::tuple<ComponentPool<Components>&...> m_Pools;
 
         std::size_t FindSmallestPoolIndex() const {
@@ -47,5 +45,38 @@ namespace NexusEngine::ECS {
 
             return smallestIndex;
         }
+
+        template<typename Func, std::size_t... I>
+        void Dispatch(Func&& func, std::size_t pivotIndex, std::index_sequence<I...>){
+            ((I == pivotIndex && (IteratePool<I>(std::forward<Func>(func)), true)), ...);
+        }
+
+
+        template<std::size_t PivotIndex, std::size_t... I>
+        bool HasAllComponents(uint32_t entityId, std::index_sequence<I...>) const {
+            return (... && (I == PivotIndex || std::get<I>(m_Pools).Get(entityId) != nullptr));
+        }
+
+        template<std::size_t PivotIndex, typename Func>
+        void IteratePool(Func&& func){
+            auto& pool = std::get<PivotIndex>(m_Pools);
+
+            for(uint32_t entityId : pool.GetEntities()){
+                if(!HasAllComponents<PivotIndex>(entityId, std::index_sequence_for<Components...>{}))
+                    continue;
+
+                Invoke(std::forward<Func>(func), std::index_sequence_for<Components...>{}, entityId);
+            }
+        }
+
+        template<typename Func, std::size_t... I>
+        void Invoke(Func&& func, std::index_sequence<I...>, uint32_t entityId){
+            func(
+                entityId,
+                *std::get<I>(m_Pools).Get(entityId)...
+            );
+        }
+
+
     };
 }

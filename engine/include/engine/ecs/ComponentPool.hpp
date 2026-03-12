@@ -78,6 +78,10 @@ namespace NexusEngine::ECS {
         std::size_t Size() const {
             return entities.size();
         }
+
+        const std::vector<uint32_t>& GetEntities() const {
+            return entities;
+        }
     private:
         std::vector<T> denseComponents;
         std::vector<uint32_t> entities;
