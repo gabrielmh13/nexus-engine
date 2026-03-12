@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <memory>
@@ -72,6 +73,10 @@ namespace NexusEngine::ECS {
             denseComponents.pop_back();
             entities.pop_back();
             SetSparseValue(entityId, INVALID_INDEX);
+        }
+
+        std::size_t Size() const {
+            return entities.size();
         }
     private:
         std::vector<T> denseComponents;
