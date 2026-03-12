@@ -48,35 +48,26 @@ namespace NexusEngine::ECS {
 
         template<typename Func, std::size_t... I>
         void Dispatch(Func&& func, std::size_t pivotIndex, std::index_sequence<I...>){
-            ((I == pivotIndex && (IteratePool<I>(std::forward<Func>(func)), true)), ...);
+            ((I == pivotIndex && (IteratePool<I>(std::forward<Func>(func), std::index_sequence_for<Components...>{}), true)), ...);
         }
 
-
-        template<std::size_t PivotIndex, std::size_t... I>
-        bool HasAllComponents(uint32_t entityId, std::index_sequence<I...>) const {
-            return (... && (I == PivotIndex || std::get<I>(m_Pools).Get(entityId) != nullptr));
-        }
-
-        template<std::size_t PivotIndex, typename Func>
-        void IteratePool(Func&& func){
+        template<std::size_t PivotIndex, typename Func, std::size_t... I>
+        void IteratePool(Func&& func, std::index_sequence<I...>){
             auto& pool = std::get<PivotIndex>(m_Pools);
 
             for(uint32_t entityId : pool.GetEntities()){
-                if(!HasAllComponents<PivotIndex>(entityId, std::index_sequence_for<Components...>{}))
-                    continue;
+                auto componentPtrs  = std::make_tuple(std::get<I>(m_Pools).Get(entityId)...);
 
-                Invoke(std::forward<Func>(func), std::index_sequence_for<Components...>{}, entityId);
+                bool hasAllComponents = std::apply([](auto*... cp){
+                    return (... && (cp != nullptr));
+                }, componentPtrs);
+
+                if(!hasAllComponents) continue;
+
+                std::apply([&](auto*... cp){
+                    func(entityId, *cp...);
+                }, componentPtrs);
             }
         }
-
-        template<typename Func, std::size_t... I>
-        void Invoke(Func&& func, std::index_sequence<I...>, uint32_t entityId){
-            func(
-                entityId,
-                *std::get<I>(m_Pools).Get(entityId)...
-            );
-        }
-
-
     };
 }
