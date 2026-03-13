@@ -17,4 +17,6 @@ protected:
 private:
     bool m_Running = false;
 };
+
+Application* CreateApplication();
 }

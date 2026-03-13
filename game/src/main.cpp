@@ -1,4 +1,4 @@
-#include "engine/core/Application.hpp"
+#include "engine/core/Entrypoint.hpp"
 #include "engine/ecs/Registry.hpp"
 
 #include <print>
@@ -7,9 +7,6 @@
 
 class NexusGame : public NexusEngine::Application {
 public:
-    NexusGame() {}
-    ~NexusGame() override {}
-
     void OnInit() override {
         std::print("Application Initialized!\n");
 
@@ -40,10 +37,6 @@ public:
     void OnShutdown() override {}
 };
 
-
-int main(){
-    NexusGame app;
-    app.Run();
-
-    return 0;
+NexusEngine::Application* NexusEngine::CreateApplication(){
+    return new NexusGame();
 }
