@@ -21,11 +21,20 @@ target_include_directories(nexus-engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inclu
 
 # Tests
 if(PROJECT_NAME STREQUAL "nexus-engine")
+    # Google Test
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/heads/main.zip
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
     file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
     add_executable(nexus-engine-tests ${TEST_SOURCES})
-
-    target_link_libraries(nexus-engine-tests PRIVATE nexus-engine)
+    target_link_libraries(nexus-engine-tests PRIVATE nexus-engine gtest_main)
     target_include_directories(nexus-engine-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-    add_test(NAME nexus-engine-tests COMMAND nexus-engine-tests)
+    include(GoogleTest)
+    gtest_discover_tests(nexus-engine-tests)
 endif()
