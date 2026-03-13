@@ -50,6 +50,41 @@ TEST(RegistryTest, RemoveComponent) {
     EXPECT_FALSE(registry.HasComponent<Position>(entity));
 }
 
+TEST(RegistryTest, AddComponentAndModify) {
+    NexusEngine::ECS::Registry registry;
+    auto entity = registry.CreateEntity();
+    auto& pos = registry.AddComponent<Position>(entity, {1, 2, 3});
+    pos.x = 99;
+    auto* fetched = registry.GetComponent<Position>(entity);
+    ASSERT_NE(fetched, nullptr);
+    EXPECT_FLOAT_EQ(fetched->x, 99);
+}
+
+TEST(RegistryTest, DestroyedEntityComponentsRemoved) {
+    NexusEngine::ECS::Registry registry;
+    auto entity = registry.CreateEntity();
+    registry.AddComponent<Position>(entity, {1, 2, 3});
+    registry.DestroyEntity(entity);
+    EXPECT_FALSE(registry.HasComponent<Position>(entity));
+}
+
+TEST(RegistryTest, GetComponent) {
+    NexusEngine::ECS::Registry registry;
+    auto entity = registry.CreateEntity();
+    registry.AddComponent<Position>(entity, {1, 2, 3});
+    auto* fetched = registry.GetComponent<Position>(entity);
+    ASSERT_NE(fetched, nullptr);
+    EXPECT_FLOAT_EQ(fetched->x, 1);
+    EXPECT_FLOAT_EQ(fetched->y, 2);
+    EXPECT_FLOAT_EQ(fetched->z, 3);
+}
+
+TEST(RegistryTest, GetComponentReturnsNullIfNotPresent) {
+    NexusEngine::ECS::Registry registry;
+    auto entity = registry.CreateEntity();
+    EXPECT_EQ(registry.GetComponent<Position>(entity), nullptr);
+}
+
 // ─── View Tests ───────────────────────────────────────────────────────────────
 
 class ViewTest : public ::testing::Test {
@@ -116,4 +151,33 @@ TEST_F(ViewTest, PositionVelocityRotation_ReturnsOnlyE0) {
         EXPECT_FLOAT_EQ(r.x, 7); EXPECT_FLOAT_EQ(r.y, 8); EXPECT_FLOAT_EQ(r.z, 9);
     });
     EXPECT_EQ(visited.size(), 1u);
+}
+
+TEST_F(ViewTest, EmptyView) {
+    struct UnusedComponent{};
+    std::size_t count = 0;
+    registry.View<Velocity, UnusedComponent>().Each([&](uint32_t, Velocity&, UnusedComponent&) {
+        count++;
+    });
+    EXPECT_EQ(count, 0u);
+}
+
+TEST_F(ViewTest, ViewReflectsComponentModification) {
+    auto* pos = registry.GetComponent<Position>(e0);
+    ASSERT_NE(pos, nullptr);
+    pos->x = 999;
+    registry.View<Position, Velocity>().Each([&](uint32_t id, Position& p, Velocity&) {
+        if (id == e0.m_Id)
+            EXPECT_FLOAT_EQ(p.x, 999);
+    });
+}
+
+TEST_F(ViewTest, ViewAfterRemoveComponent) {
+    registry.RemoveComponent<Velocity>(e0);
+    std::vector<uint32_t> visited;
+    registry.View<Position, Velocity>().Each([&](uint32_t id, Position&, Velocity&) {
+        visited.push_back(id);
+    });
+    EXPECT_EQ(visited.size(), 1u);
+    EXPECT_EQ(std::find(visited.begin(), visited.end(), e0.m_Id), visited.end());
 }

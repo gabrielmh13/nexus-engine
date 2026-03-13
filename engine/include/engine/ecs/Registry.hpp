@@ -35,15 +35,25 @@ namespace NexusEngine::ECS {
         }
 
         template<typename T>
+        T* GetComponent(Entity entity){
+            if(!IsEntityValid(entity))
+                return nullptr;
+            auto& pool = GetPool<T>();
+            return pool.Get(entity.m_Id);
+        }
+
+        template<typename T>
         void RemoveComponent(Entity entity){
-            assert(IsEntityValid(entity) && "Entity is not valid");
+            if(!IsEntityValid(entity))
+                return;
             auto& pool = GetPool<T>();
             pool.Remove(entity.m_Id);
         }
 
         template<typename T>
         bool HasComponent(Entity entity) {
-            assert(IsEntityValid(entity) && "Entity is not valid");
+            if(!IsEntityValid(entity))
+                return false;
             auto& pool = GetPool<T>();
             return pool.Get(entity.m_Id) != nullptr;
         }
