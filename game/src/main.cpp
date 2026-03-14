@@ -4,6 +4,7 @@
 #include <print>
 #include <thread>
 #include <chrono>
+#include <memory>
 
 class NexusGame : public NexusEngine::Application {
 public:
@@ -37,6 +38,6 @@ public:
     void OnShutdown() override {}
 };
 
-NexusEngine::Application* NexusEngine::CreateApplication(){
-    return new NexusGame();
+std::unique_ptr<NexusEngine::Application> NexusEngine::CreateApplication(){
+    return std::make_unique<NexusGame>();
 }

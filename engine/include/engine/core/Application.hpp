@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 namespace NexusEngine {
 class Application {
 public:
@@ -18,5 +20,5 @@ private:
     bool m_Running = false;
 };
 
-Application* CreateApplication();
+std::unique_ptr<Application> CreateApplication();
 }
