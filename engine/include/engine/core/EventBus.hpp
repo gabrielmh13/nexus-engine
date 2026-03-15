@@ -37,7 +37,7 @@ namespace NexusEngine {
         template<typename TEvent, typename Callback>
         void Subscribe(Callback&& cb){
             auto [it, _] = m_Subscribers.try_emplace(std::type_index(typeid(TEvent)));
-           it->second.push_back(std::make_unique<EventHandler<TEvent>>(std::forward<Callback>(cb)));
+            it->second.push_back(std::make_unique<EventHandler<TEvent>>(std::forward<Callback>(cb)));
         }
 
         template<typename TEvent>
