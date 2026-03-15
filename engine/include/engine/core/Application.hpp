@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/core/EventBus.hpp"
+
 #include <memory>
 
 namespace NexusEngine {
@@ -16,6 +18,8 @@ protected:
     virtual void OnUpdate(float) {}
     virtual void OnShutdown() {}
 
+
+    EventBus m_EventBus;
 private:
     bool m_Running = false;
 };

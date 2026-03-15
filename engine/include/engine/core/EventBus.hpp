@@ -42,7 +42,7 @@ namespace NexusEngine {
 
         template<typename TEvent>
         void Publish(TEvent&& event){
-
+            m_Queue.push_back(std::make_unique<TEvent>(std::forward<TEvent>(event)));
         }
 
         void Process();

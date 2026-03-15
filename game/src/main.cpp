@@ -1,27 +1,30 @@
 #include "engine/core/Entrypoint.hpp"
-#include "engine/ecs/Registry.hpp"
 
 #include <print>
 #include <thread>
 #include <chrono>
 #include <memory>
+#include<string>
+
+class TestEvent : public NexusEngine::IEvent {
+public:
+    TestEvent(std::string msg)
+        : m_Msg(std::move(msg)) {}
+
+    std::string m_Msg;
+};
 
 class NexusGame : public NexusEngine::Application {
 public:
     void OnInit() override {
         std::print("Application Initialized!\n");
 
-        NexusEngine::ECS::Registry registry;
-        auto entity = registry.CreateEntity();
-        std::print("Entity created: {} {} \n", entity.m_Id, entity.m_Generation);
+        m_EventBus.Subscribe<TestEvent>([](TestEvent& event){
+            std::print("EventBus msg: {}", event.m_Msg);
+        });
 
-        registry.DestroyEntity(entity);
-        std::print("Entity destroyed: {} {} \n", entity.m_Id, entity.m_Generation);
-        auto entity2 = registry.CreateEntity();
-        std::print("Entity created: {} {} \n", entity2.m_Id, entity2.m_Generation);
-
-        auto entity3 = registry.CreateEntity();
-        std::print("Entity created: {} {} \n", entity3.m_Id, entity3.m_Generation);
+        m_EventBus.Publish(TestEvent("Hello EventBus!\n"));
+        
     }
     void OnUpdate(float dt) override {
         std::print("Delta Time: {} seconds\n", dt);

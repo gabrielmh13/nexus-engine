@@ -10,6 +10,7 @@ namespace NexusEngine {
         while(m_Running){
             Time::Update();
             OnUpdate(Time::DeltaTime());
+            m_EventBus.Process();
         }
 
         OnShutdown();
