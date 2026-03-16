@@ -1,7 +1,7 @@
 #include "engine/core/EventBus.hpp"
 
 #include <gtest/gtest.h>
-
+#include <vector>
 
 struct KeyPressEvent : NexusEngine::IEvent {
     int key;
