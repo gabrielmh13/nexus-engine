@@ -1,42 +1,33 @@
 #include "engine/core/Entrypoint.hpp"
+#include "engine/core/Window.hpp"
+#include "engine/events/WindowEvents.hpp"
 
 #include <print>
-#include <thread>
-#include <chrono>
 #include <memory>
-#include<string>
-
-class TestEvent : public NexusEngine::IEvent {
-public:
-    TestEvent(std::string msg)
-        : m_Msg(std::move(msg)) {}
-
-    std::string m_Msg;
-};
 
 class NexusGame : public NexusEngine::Application {
+    std::unique_ptr<NexusEngine::Window> m_Window;
+
 public:
     void OnInit() override {
         std::print("Application Initialized!\n");
 
-        m_EventBus.Subscribe<TestEvent>([](TestEvent& event){
-            std::print("EventBus msg: {}", event.m_Msg);
+        m_Window = NexusEngine::Window::Create(800, 600, "NexusGame", m_EventBus);
+
+        m_EventBus.Subscribe<NexusEngine::WindowResizeEvent>([](NexusEngine::WindowResizeEvent& event){
+            std::print("Window Resized: Width={} | Heigh={}\n", event.width, event.height);
         });
 
-        m_EventBus.Publish(TestEvent("Hello EventBus!\n"));
+        m_EventBus.Subscribe<NexusEngine::WindowCloseEvent>([this](NexusEngine::WindowCloseEvent&) {
+            std::print("Closing...\n");
+            Quit();
+        });
         
     }
     void OnUpdate(float dt) override {
+        m_Window->Update();
+
         std::print("Delta Time: {} seconds\n", dt);
-
-        static float totalTime = 0.0f;
-        totalTime += dt;
-        if(totalTime >= 1.0f){
-            std::print("Total Time: {} seconds\n", totalTime);
-            Quit();
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     void OnShutdown() override {}
 };
