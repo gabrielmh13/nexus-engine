@@ -1,7 +1,5 @@
 #include "engine/core/EventBus.hpp"
 
-#include <typeindex>
-
 namespace NexusEngine {
     void EventBus::Process(){
         for(auto& event : m_Queue){
